@@ -10,6 +10,9 @@
 		40052EAA1CDCA86100F4B1A9 /* Tool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40052EA91CDCA86100F4B1A9 /* Tool.swift */; };
 		40052EAF1CDCA8AA00F4B1A9 /* ProgressHUD.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 40052EAC1CDCA8AA00F4B1A9 /* ProgressHUD.bundle */; };
 		40052EB01CDCA8AA00F4B1A9 /* ProgressHUD.m in Sources */ = {isa = PBXBuildFile; fileRef = 40052EAE1CDCA8AA00F4B1A9 /* ProgressHUD.m */; };
+		404C8D0A1CDF0736007BF90F /* FrontPageViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 404C8D091CDF0736007BF90F /* FrontPageViewController.swift */; };
+		404C8D0C1CDF0958007BF90F /* MyCollectionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 404C8D0B1CDF0958007BF90F /* MyCollectionViewController.swift */; };
+		406847A21CDDDBA0004DE25E /* HSDraftUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 406847A11CDDDBA0004DE25E /* HSDraftUtils.swift */; };
 		40EAEA951CDBB2F90080CDBC /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40EAEA941CDBB2F90080CDBC /* AppDelegate.swift */; };
 		40EAEA9A1CDBB2F90080CDBC /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 40EAEA981CDBB2F90080CDBC /* Main.storyboard */; };
 		40EAEA9C1CDBB2F90080CDBC /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 40EAEA9B1CDBB2F90080CDBC /* Assets.xcassets */; };
@@ -32,6 +35,9 @@
 		40052EAC1CDCA8AA00F4B1A9 /* ProgressHUD.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = ProgressHUD.bundle; sourceTree = "<group>"; };
 		40052EAD1CDCA8AA00F4B1A9 /* ProgressHUD.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProgressHUD.h; sourceTree = "<group>"; };
 		40052EAE1CDCA8AA00F4B1A9 /* ProgressHUD.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ProgressHUD.m; sourceTree = "<group>"; };
+		404C8D091CDF0736007BF90F /* FrontPageViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FrontPageViewController.swift; sourceTree = "<group>"; };
+		404C8D0B1CDF0958007BF90F /* MyCollectionViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MyCollectionViewController.swift; sourceTree = "<group>"; };
+		406847A11CDDDBA0004DE25E /* HSDraftUtils.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HSDraftUtils.swift; sourceTree = "<group>"; };
 		40EAEA911CDBB2F80080CDBC /* HSDraftSim.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HSDraftSim.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		40EAEA941CDBB2F90080CDBC /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		40EAEA991CDBB2F90080CDBC /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
@@ -157,6 +163,9 @@
 				40EAEAC01CDBB5DC0080CDBC /* MainDraftViewController.swift */,
 				40EAEAC21CDBB6100080CDBC /* HSCard.swift */,
 				40EAEAC81CDBD6D50080CDBC /* HSCardView.swift */,
+				406847A11CDDDBA0004DE25E /* HSDraftUtils.swift */,
+				404C8D091CDF0736007BF90F /* FrontPageViewController.swift */,
+				404C8D0B1CDF0958007BF90F /* MyCollectionViewController.swift */,
 			);
 			path = Source;
 			sourceTree = "<group>";
@@ -303,8 +312,11 @@
 				40EAEAC11CDBB5DC0080CDBC /* MainDraftViewController.swift in Sources */,
 				40052EB01CDCA8AA00F4B1A9 /* ProgressHUD.m in Sources */,
 				40EAEAB91CDBB3ED0080CDBC /* DZXStringKit.swift in Sources */,
+				404C8D0C1CDF0958007BF90F /* MyCollectionViewController.swift in Sources */,
 				40EAEAB81CDBB3ED0080CDBC /* DZXFontKit.swift in Sources */,
+				404C8D0A1CDF0736007BF90F /* FrontPageViewController.swift in Sources */,
 				40EAEAC31CDBB6100080CDBC /* HSCard.swift in Sources */,
+				406847A21CDDDBA0004DE25E /* HSDraftUtils.swift in Sources */,
 				40EAEABB1CDBB3ED0080CDBC /* DZXUIKit.swift in Sources */,
 				40EAEAC91CDBD6D50080CDBC /* HSCardView.swift in Sources */,
 			);

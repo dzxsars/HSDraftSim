@@ -46,11 +46,12 @@ class HSCardView: UIView {
 //        cardBack.hidden = true
         bkg.addSubview(cardBack)
         
-        costLabel = DZXUIKit.createLabel(NSNumber(integer:card.cost).stringValue, textColor: DZXColorKit.black, adjustWidth: nil, adjustHeight: nil, fontSize: 40)
+        costLabel = DZXUIKit.createLabel(NSNumber(integer:card.cost).stringValue, textColor: DZXColorKit.black, adjustWidth: 10, adjustHeight: 20, fontSize: nil)
+        costLabel.textAlignment = .Center
         bkg.addSubview(costLabel)
         
 //        nameLabel = DZXUIKit.createLabel(card.name, textColor: DZXColorKit.black, adjustWidth: nil, adjustHeight: nil, fontSize: 35)
-        nameLabel = DZXUIKit.createLabel(card.name, textColor: DZXColorKit.black, adjustWidth: 150, adjustHeight: 40, fontSize: nil)
+        nameLabel = DZXUIKit.createLabel(card.name, textColor: DZXColorKit.black, adjustWidth: 60, adjustHeight: 30, fontSize: nil)
         nameLabel.textAlignment = .Center
         bkg.addSubview(nameLabel)
         
@@ -61,31 +62,33 @@ class HSCardView: UIView {
         rarityImage = UIImageView()
         switch card.rarity {
         case .LEGENDARY:
-            rarityImage.image = DZXUIKit.createImageFromColor(UIColor.orangeColor(), size: CGSize(width: 20,height: 20))
+            rarityImage.image = DZXUIKit.createImageFromColor(UIColor.orangeColor(), size: CGSize(width: 10,height: 10))
         case .EPIC:
-            rarityImage.image = DZXUIKit.createImageFromColor(UIColor.purpleColor(), size: CGSize(width: 20,height: 20))
+            rarityImage.image = DZXUIKit.createImageFromColor(UIColor.purpleColor(), size: CGSize(width: 10,height: 10))
         case .RARE:
-            rarityImage.image = DZXUIKit.createImageFromColor(UIColor.blueColor(), size: CGSize(width: 20,height: 20))
+            rarityImage.image = DZXUIKit.createImageFromColor(UIColor.blueColor(), size: CGSize(width: 10,height: 10))
         case .COMMON:
-            rarityImage.image = DZXUIKit.createImageFromColor(UIColor.grayColor(), size: CGSize(width: 20,height: 20))
+            rarityImage.image = DZXUIKit.createImageFromColor(UIColor.grayColor(), size: CGSize(width: 10,height: 10))
         default:
             break
         }
         bkg.addSubview(rarityImage)
         
 //        infoLabel = DZXUIKit.createLabel(card.flavor, textColor: DZXColorKit.black, adjustWidth: nil, adjustHeight: nil, fontSize: 20)
-        infoText = DZXUIKit.createTextView(DZXColorKit.black, backgroundColor: nil, editable: false, fontSize: nil, cornerRadius: nil, borderColor: nil, borderWidth: nil)
+        infoText = DZXUIKit.createTextView(DZXColorKit.black, backgroundColor: nil, editable: false, fontSize: 12, cornerRadius: nil, borderColor: nil, borderWidth: nil)
         infoText.text = card.flavor
         bkg.addSubview(infoText)
         
         if(card.attack != nil){
-            attackLabel = DZXUIKit.createLabel(NSNumber(integer:card.attack!).stringValue, textColor: DZXColorKit.black, adjustWidth: nil, adjustHeight: nil, fontSize: 30)
+            attackLabel = DZXUIKit.createLabel(NSNumber(integer:card.attack!).stringValue, textColor: DZXColorKit.black, adjustWidth: 10, adjustHeight: 20, fontSize: nil)
         }
+        attackLabel.textAlignment = .Center
         bkg.addSubview(attackLabel)
         
         if(card.health != nil){
-            healthLabel = DZXUIKit.createLabel(NSNumber(integer:card.health!).stringValue, textColor: DZXColorKit.black, adjustWidth: nil, adjustHeight: nil, fontSize: 30)
+            healthLabel = DZXUIKit.createLabel(NSNumber(integer:card.health!).stringValue, textColor: DZXColorKit.black, adjustWidth: 10, adjustHeight: 20, fontSize: nil)
         }
+        healthLabel.textAlignment = .Center
         bkg.addSubview(healthLabel)
         
         var str = card.type.toText()
@@ -96,7 +99,8 @@ class HSCardView: UIView {
                 str = ""
             }
         }
-        typeLabel = DZXUIKit.createLabel(str, textColor: DZXColorKit.black, adjustWidth: nil, adjustHeight: nil, fontSize: 25)
+        typeLabel = DZXUIKit.createLabel(str, textColor: DZXColorKit.black, adjustWidth: 30, adjustHeight: 20, fontSize: nil)
+        typeLabel.textAlignment = .Center
         bkg.addSubview(typeLabel)
         
         virtualBtn = DZXUIKit.createButton(nil, textColor: nil, fontSize: nil, backgroundColor: nil, cornerRadius: nil, borderColor: nil, borderWidth: nil, target: self, action: #selector(self.btnIsClicked))
@@ -130,6 +134,10 @@ class HSCardView: UIView {
     
     ///初始化约束
     func initializeConstraints(){
+        bkg.snp_makeConstraints { (make) in
+            make.edges.equalTo(self)
+        }
+        
         cardBack.snp_makeConstraints { (make) in
             make.edges.equalTo(bkg)
         }
@@ -168,23 +176,23 @@ class HSCardView: UIView {
         
         mainImage.snp_makeConstraints { (make) in
             make.top.equalTo(costLabel.snp_bottom).offset(10)
-            make.height.equalTo(100)
+            make.bottom.equalTo(rarityImage.snp_top).offset(-10)
             make.left.equalTo(infoText)
             make.right.equalTo(infoText)
         }
         
         rarityImage.snp_makeConstraints { (make) in
-            make.top.equalTo(mainImage.snp_bottom).offset(10)
-            make.height.equalTo(20)
+            make.height.equalTo(10)
             make.centerX.equalTo(bkg)
-            make.width.equalTo(20)
+            make.width.equalTo(10)
+            make.bottom.greaterThanOrEqualTo(infoText.snp_top)
         }
         
         infoText.snp_makeConstraints { (make) in
             make.left.equalTo(bkg).offset(10)
             make.right.equalTo(bkg).offset(-10)
-            make.bottom.equalTo(attackLabel.snp_top).offset(-10)
-            make.top.equalTo(rarityImage.snp_bottom).offset(10)
+            make.height.equalTo(bkg).dividedBy(4)
+            make.bottom.equalTo(typeLabel.snp_top).offset(-10)
         }
         
         typeLabel.snp_makeConstraints { (make) in
@@ -194,10 +202,9 @@ class HSCardView: UIView {
             make.height.equalTo(typeLabel.frame.height)
         }
         
-        bkg.snp_makeConstraints { (make) in
-            make.edges.equalTo(self)
-        }
+        
     }
+
 
 
 

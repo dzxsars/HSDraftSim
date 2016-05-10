@@ -19,7 +19,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         
         window = UIWindow(frame: UIScreen.mainScreen().bounds)
         window?.makeKeyAndVisible()
-        window?.rootViewController = UINavigationController(rootViewController: MainDraftViewController())
+        window?.rootViewController = UINavigationController(rootViewController: FrontPageViewController())
         return true
     }
 

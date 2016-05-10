@@ -8,12 +8,7 @@
 
 import UIKit
 
-class MainDraftViewController: UIViewController,HSCardViewProtocol,UITableViewDelegate,UITableViewDataSource {
-    
-    var legendaryCards : NSArray = []
-    var epicCards : NSArray = []
-    var rareCards : NSArray = []
-    var commonCards : NSArray = []
+class MainDraftViewController: UIViewController,HSCardViewProtocol,UITableViewDelegate,UITableViewDataSource,UIActionSheetDelegate {
     
     ///当前抽到的一包
     var draftedCards : NSArray = []
@@ -21,7 +16,7 @@ class MainDraftViewController: UIViewController,HSCardViewProtocol,UITableViewDe
     ///剩余的包数
     var remainCardPackages : Int = 60
     
-    ///本次已经打开的包数
+    ///已经打开的包数
     var cardPackagesOpened : Int = 0
     
     ///统计已经抽到的各类张数
@@ -34,10 +29,11 @@ class MainDraftViewController: UIViewController,HSCardViewProtocol,UITableViewDe
     var discoveredCardsScroll : UIScrollView = UIScrollView()
     var resultTable : UITableView = UITableView()
     var draftButton : UIButton = UIButton()
+    var completeButton : UIButton = UIButton()
     var remainLabel : UILabel = UILabel()
     var openedLabel : UILabel = UILabel()
     
-    var isDrafting : Bool = false
+    var cardsOpenedInOnePackage : Int = 0
 
 
     override func viewDidLoad() {
@@ -49,7 +45,8 @@ class MainDraftViewController: UIViewController,HSCardViewProtocol,UITableViewDe
         self.setUpInitialLooking()
         self.setUpActions()
         self.setUpOnlineData()
-        self.loadJSONFile()
+
+//        self.loadJSONFile()
     }
 
     override func didReceiveMemoryWarning() {
@@ -77,11 +74,13 @@ class MainDraftViewController: UIViewController,HSCardViewProtocol,UITableViewDe
         discoveredCardsScroll.layer.cornerRadius = 10
         discoveredCardsScroll.layer.masksToBounds = true
         discoveredCardsScroll.pagingEnabled = true
+        discoveredCardsScroll.hidden = true
         view.addSubview(discoveredCardsScroll)
         
         resultTable.backgroundColor = UIColor.whiteColor()
         resultTable.layer.cornerRadius = 10
         resultTable.layer.masksToBounds = true
+        resultTable.scrollEnabled = false
         view.addSubview(resultTable)
         
         remainLabel = DZXUIKit.createLabel("还剩\(remainCardPackages)包", textColor: DZXColorKit.black, adjustWidth: nil, adjustHeight: nil, fontSize: 30)
@@ -90,8 +89,12 @@ class MainDraftViewController: UIViewController,HSCardViewProtocol,UITableViewDe
         openedLabel = DZXUIKit.createLabel("已开\(cardPackagesOpened)包", textColor: DZXColorKit.black, adjustWidth: nil, adjustHeight: nil, fontSize: 30)
         view.addSubview(openedLabel)
         
-        draftButton = DZXUIKit.createButton("开一包", textColor: DZXColorKit.black, fontSize: 30, backgroundColor: DZXColorKit.btnBkg, cornerRadius: 5, borderColor: nil, borderWidth: nil, target: self, action: #selector(self.draftFiveCards))
+        draftButton = DZXUIKit.createButton("开一包", textColor: DZXColorKit.black, fontSize: 30, backgroundColor: DZXColorKit.btnBkg, cornerRadius: 5, borderColor: nil, borderWidth: nil, target: self, action: #selector(self.startDrafting))
         view.addSubview(draftButton)
+        
+        completeButton = DZXUIKit.createButton("关闭", textColor: DZXColorKit.black, fontSize: 30, backgroundColor: DZXColorKit.btnBkg, cornerRadius: 5, borderColor: nil, borderWidth: nil, target: self, action: #selector(self.closeDraftView))
+        completeButton.hidden = true
+        view.addSubview(completeButton)
         
         self.initializeConstraints()
     }
@@ -99,10 +102,17 @@ class MainDraftViewController: UIViewController,HSCardViewProtocol,UITableViewDe
     ///初始化约束
     func initializeConstraints(){
         discoveredCardsScroll.snp_makeConstraints { (make) in
-            make.height.equalTo(view).dividedBy(2)
+            make.top.equalTo(view).offset(32 + 20)
             make.left.equalTo(view).offset(20)
             make.right.equalTo(view).offset(-20)
+            make.bottom.equalTo(completeButton.snp_top).offset(-10)
+        }
+        
+        completeButton.snp_makeConstraints { (make) in
+            make.height.equalTo(40)
             make.bottom.equalTo(view).offset(-20)
+            make.centerX.equalTo(view)
+            make.width.equalTo(60)
         }
         
         draftButton.snp_makeConstraints { (make) in
@@ -114,22 +124,21 @@ class MainDraftViewController: UIViewController,HSCardViewProtocol,UITableViewDe
         
         remainLabel.snp_makeConstraints { (make) in
             make.left.equalTo(resultTable)
-            make.width.equalTo(draftButton)
+            make.width.lessThanOrEqualTo(view.frame.width / 5)
             make.height.equalTo(draftButton)
             make.top.equalTo(draftButton)
         }
         
         openedLabel.snp_makeConstraints { (make) in
             make.right.equalTo(resultTable)
-            make.width.equalTo(draftButton)
+            make.width.lessThanOrEqualTo(view.frame.width / 5)
             make.height.equalTo(draftButton)
             make.top.equalTo(draftButton)
-            
         }
         
         resultTable.snp_makeConstraints { (make) in
             make.top.equalTo(draftButton.snp_bottom).offset(20)
-            make.bottom.equalTo(discoveredCardsScroll.snp_top).offset(-30)
+            make.bottom.equalTo(view).offset(-20)
             make.left.equalTo(discoveredCardsScroll)
             make.right.equalTo(discoveredCardsScroll)
         }
@@ -154,159 +163,19 @@ class MainDraftViewController: UIViewController,HSCardViewProtocol,UITableViewDe
     }
     
     
-    func loadJSONFile(){
-        let path = NSBundle.mainBundle().pathForResource("card", ofType: "json")
-        if(path != nil){
-            let url = NSURL(fileURLWithPath: path!)
-            let nsData: NSData = NSData(contentsOfURL: url)!
-            var json: AnyObject?
-            do{
-                json = try NSJSONSerialization.JSONObjectWithData(nsData, options: NSJSONReadingOptions.MutableContainers)
-            }catch{
-                print("json catch error")
-            }
-            let arr = json as? NSArray
-            if(arr != nil){
-                self.splitCardsByRarity(arr!)
-            }
-        }
-    }
+
     /*
      {"id":"NEW1_036","type":"SPELL","set":"EXPERT1","dust":[100,800,20,100],"rarity":"RARE","texture":"W2_414_D","flavor":"“大声吼出来！把你的怒气吼出来！”——对训练中的战士的建议","text":"在本回合中，你的随从的生命值无法被降到1点以下。抽一张牌。","name":"命令怒吼","collectible":true,"playerClass":"WARRIOR","cost":2,"artist":"Wayne Reynolds"}
      {"id":"LOE_006","texture":"HS6-010_D","type":"MINION","howToEarn":"加入“探险者协会”冒险模式，在探险者大厅中解锁。","set":"LOE","mechanics":["BATTLECRY"],"rarity":"COMMON","collectible":true,"flavor":"馆长的脾气不太好，这都要归咎于那些攀爬书架的熊孩子和企图复活展品的疯子们。","cost":2,"name":"博物馆馆长","howToEarnGolden":"加入“探险者协会”冒险模式，在探险者大厅中解锁制作。","health":2,"playerClass":"PRIEST","text":"<b>战吼：发现</b>一张<b>亡语</b>牌。","artist":"Steve Prescott","attack":1}
     */
     
-    func splitCardsByRarity(allCards:NSArray){
-        let commons = NSMutableArray()
-        let rares = NSMutableArray()
-        let epics = NSMutableArray()
-        let legendaries = NSMutableArray()
-        
-        for item in allCards{
-            var card : HSCard = HSCard()
-            
-//            let mechanics : NSArray?
-//            let fMechanics : NSMutableArray
-            
-            let type : String = (item as! NSDictionary).objectForKey("type")as! String
-            if(type == "HERO"){
-                continue
-            }
-            let rarity : String = (item as! NSDictionary).objectForKey("rarity")as! String
-            var frarity : HSRarity = .COMMON
-            switch rarity {
-            case "LEGENDARY":
-                frarity = .LEGENDARY
-            case "EPIC":
-                frarity = .EPIC
-            case "RARE":
-                frarity = .RARE
-            case "COMMON":
-                frarity = .COMMON
-            case "FREE":
-                continue
-            default:
-                break
-            }
-            let name : String = (item as! NSDictionary).objectForKey("name")as! String
-            var flavor : String
-            if(name != "消失"){
-                flavor = (item as! NSDictionary).objectForKey("flavor")as! String
-            }else{
-                flavor = ""
-            }
-            let cost : Int = (item as! NSDictionary).objectForKey("cost")as! Int
-            let duration : Int? = (item as! NSDictionary).objectForKey("duration")as? Int
-            
-            var race : String?
-            var frace : HSMinionRace? = nil
-            var attack : Int?
-            var health : Int?
-            
-            attack = (item as! NSDictionary).objectForKey("attack")as? Int
-            health = (item as! NSDictionary).objectForKey("health")as? Int
-            race = (item as! NSDictionary).objectForKey("race")as? String
-            if(race != nil){
-                switch race! {
-                case "MURLOC":
-                    frace = .MURLOC
-                case "BEAST":
-                    frace = .BEAST
-                case "DRAGON":
-                    frace = .DRAGON
-                case "MACHINERY":
-                    frace = .MECHANICAL
-                case "DEMON":
-                    frace = .DEMON
-                case "PIRATE":
-                    frace = .PIRATE
-                case "TOTEM":
-                    frace = .TOTEM
-                default:
-                    break
-                }
-            }else{
-                frace = nil
-            }
-            var ftype : HSCardType = .MINION
-            if(type == "MINION"){
-                ftype = .MINION
-                
-                
-                /*
-                mechanics = (item as! NSDictionary).objectForKey("mechanics")as? NSArray
-                if(mechanics != nil){
-                    for ability in mechanics!{
-                        let str = ability as! String
-                        switch str {
-                        case "CHARGE":
-                        case "TAUNT":
-                        case "STEATH":
-                        case "COMBO":
-                        case "BATTLECRY":
-                        case "WINDFURY":
-                        case "ENRAGE":
-                        case "DIVINESHIELD":
-                        case "SPELLPOWER":
-                        case "OVERLOAD":
-                        case "INSPIRE":
-                           fMechanics.addObject(HSMinionAbility.Taunt.rawValue)
-                            case ""
-                        default:
-                            break
-                        }
-                    }
-                */
-                card = HSCard(name: name, flavor: flavor, rarity: frarity, cost: cost, type: ftype, attack: attack, health: health, race: frace, duration: duration)
-            }else if(type == "SPELL"){
-                ftype = .SPELL
-                card = HSCard(name: name, flavor: flavor, rarity: frarity, cost: cost, type: ftype, attack: nil, health: nil, race: nil, duration: nil)
-            }else if(type == "WEAPON"){
-                ftype = .WEAPON
-                card = HSCard(name: name, flavor: flavor, rarity: frarity, cost: cost, type: ftype, attack: nil, health: nil, race: nil, duration: nil)
-            }
-            
-            switch card.rarity {
-            case .COMMON:
-                commons.addObject(card)
-            case .RARE:
-                rares.addObject(card)
-            case .EPIC:
-                epics.addObject(card)
-            case .LEGENDARY:
-                legendaries.addObject(card)
-            case .FREE:
-                break
-            }
-        }
-        commonCards = NSArray(array: commons)
-        rareCards = NSArray(array: rares)
-        epicCards = NSArray(array: epics)
-        legendaryCards = NSArray(array: legendaries)
-        print(commonCards.count)
-        print(rareCards.count)
-        print(epicCards.count)
-        print(legendaryCards.count)
+    func closeDraftView(){
+        self.discoveredCardsScroll.hidden = true
+        self.completeButton.hidden = true
+        self.resultTable.hidden = false
+        self.draftButton.hidden = false
+        self.openedLabel.hidden = false
+        self.remainLabel.hidden = false
     }
     
     /*
@@ -315,60 +184,9 @@ class MainDraftViewController: UIViewController,HSCardViewProtocol,UITableViewDe
      1/100 - Legendary
      rest - common
      */
-    func draftFiveCards(){
-        //        isDrafting = true
-        //        self.draftButton.userInteractionEnabled = false
-        //        self.draftButton.setTitle("抽取中...", forState: .Normal)
-        if(self.remainCardPackages >= 1){
-            self.remainCardPackages -= 1
-            self.remainLabel.text = "还剩\(self.remainCardPackages)包"
-            self.cardPackagesOpened += 1
-            self.openedLabel.text = "已开\(self.cardPackagesOpened)包"
-            
-            let allCardsCount = legendaryCards.count + epicCards.count + rareCards.count + commonCards.count
-            let drafted = NSMutableArray()
-            var rareDrafted = false
-            for i in 0...4{
-                if(i == 4 && !rareDrafted){
-                    let r = arc4random() % 100 + 1
-                    if(r == 1){//legendary
-                        let lr = Int(arc4random() % UInt32(legendaryCards.count))
-                        drafted.addObject(legendaryCards[lr])
-                        rareDrafted = true
-                    }else if(r >= 2 && r <= 5){//epic
-                        let er = Int(arc4random() % UInt32(epicCards.count))
-                        drafted.addObject(epicCards[er])
-                        rareDrafted = true
-                    }else{//rare
-                        let rr = Int(arc4random() % UInt32(rareCards.count))
-                        drafted.addObject(rareCards[rr])
-                        rareDrafted = true
-                    }
-                }else{
-                    let r = arc4random() % 100 + 1
-                    if(r == 1){//legendary
-                        let lr = Int(arc4random() % UInt32(legendaryCards.count))
-                        drafted.addObject(legendaryCards[lr])
-                        rareDrafted = true
-                    }else if(r >= 2 && r <= 5){//epic
-                        let er = Int(arc4random() % UInt32(epicCards.count))
-                        drafted.addObject(epicCards[er])
-                        rareDrafted = true
-                    }else if(r >= 6 && r <= 25){//rare
-                        let rr = Int(arc4random() % UInt32(rareCards.count))
-                        drafted.addObject(rareCards[rr])
-                        rareDrafted = true
-                    }else{//common
-                        let cr = Int(arc4random() % UInt32(commonCards.count))
-                        drafted.addObject(commonCards[cr])
-                    }
-                }
-            }
-            draftedCards = NSArray(array: drafted)
-            self.addDraftedCardsToScroll(discoveredCardsScroll)
-        }else{
-            Tool.showErrorHUD("请购买更多的包")
-        }
+    func startDrafting(){
+        let action = UIActionSheet(title: "选择卡包种类", delegate: self, cancelButtonTitle: "取消", destructiveButtonTitle: nil, otherButtonTitles: "经典", "冠军的试炼", "上古之神的低语")
+        action.showInView(view)
     }
     
     func addDraftedCardsToScroll(scroll:UIScrollView){
@@ -378,10 +196,18 @@ class MainDraftViewController: UIViewController,HSCardViewProtocol,UITableViewDe
         scroll.layoutIfNeeded()
         for i in 0...(draftedCards.count - 1){
             let card = draftedCards[i] as! HSCard
-            let cView = HSCardView(frame: CGRectMake(CGFloat(i) * scroll.frame.width + (scroll.frame.width - 200) / 2, (scroll.frame.height - 300) / 2, 200, 300), card: card)
-//            let cView = HSCardView(frame: CGRectMake(CGFloat(i) * 200 + CGFloat(i + 1) * 10, 330 / 2 - 150, 200, 300), card: card)
+            let cView = HSCardView(frame: CGRectZero, card: card)
             cView.delegate = self
             scroll.addSubview(cView)
+            
+            scroll.layoutIfNeeded()
+            let aimWidth = (scroll.frame.height - 20) / 4 * 3
+            cView.snp_makeConstraints(closure: { (make) in
+                make.left.equalTo(scroll).offset(CGFloat(i) * scroll.frame.width + (scroll.frame.width - aimWidth) / 2)
+                make.width.equalTo(aimWidth)
+                make.centerY.equalTo(scroll)
+                make.top.equalTo(scroll).offset(10)
+            })
         }
         scroll.contentSize = CGSizeMake(5 * scroll.frame.width,0)
         scroll.contentOffset = CGPoint(x: 0, y: 0)
@@ -395,6 +221,14 @@ class MainDraftViewController: UIViewController,HSCardViewProtocol,UITableViewDe
     func cardIsClicked(discovered: Bool, rarity: HSRarity) {
         
         if(!discovered){
+            cardsOpenedInOnePackage += 1
+            if(cardsOpenedInOnePackage == 5){
+                //改变状态至已抽完
+//                self.draftButton.userInteractionEnabled = true
+//                self.draftButton.setTitle("开一包", forState: .Normal)
+                self.cardsOpenedInOnePackage = 0
+                self.completeButton.hidden = false
+            }
             if(rarity != .COMMON){
                 var color = UIColor()
                 switch rarity {
@@ -491,6 +325,40 @@ class MainDraftViewController: UIViewController,HSCardViewProtocol,UITableViewDe
         tableView.deselectRowAtIndexPath(indexPath, animated: true)
     }
 
+    //*********************************************//
+    // MARK: - UIActionSheet Delegate
+    //*********************************************//
+    func actionSheet(actionSheet: UIActionSheet, willDismissWithButtonIndex buttonIndex: Int) {
+        var draft : NSArray?
+        switch buttonIndex {
+        case 0:
+            return
+        case 1:
+            draft = HSDraftUtils.sharedInstance().createOneNewPackage(.EXPERT1)
+            
+        case 2:
+            draft = HSDraftUtils.sharedInstance().createOneNewPackage(.TGT)
+        case 3:
+            draft = HSDraftUtils.sharedInstance().createOneNewPackage(.OG)
+        default:
+            return
+        }
+        self.cardsOpenedInOnePackage = 0
+        self.draftButton.hidden = true
+        self.remainLabel.hidden = true
+        self.openedLabel.hidden = true
+        self.resultTable.hidden = true
+        self.discoveredCardsScroll.hidden = false
+        if(draft != nil){
+            draftedCards = draft!
+            self.addDraftedCardsToScroll(discoveredCardsScroll)
+            self.remainLabel.text = "还剩\(HSDraftUtils.sharedInstance().readUserRemainCardPackages())包"
+            self.cardPackagesOpened += 1
+            self.openedLabel.text = "已开\(self.cardPackagesOpened)包"
+        }else{
+            Tool.showErrorHUD("开包失败")
+        }
+    }
     
     
 
